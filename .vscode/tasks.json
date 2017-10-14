@@ -1,0 +1,46 @@
+{
+   "version": "2.0.0",
+   "tasks": [
+      {
+         "taskName": "Run Server",
+         "osx": {
+            "command": "go run ./cmd/server/main.go -debug=true -silent=true -local=tobal.local"
+         },
+         "windows": {
+            "command": "go build -o toba-debug.exe ./cmd/server/main.go; .\\toba-debug.exe -debug=true -silent=true -local=tobal.local"
+         },
+         "group": "build",
+         "problemMatcher": [
+            "$go"
+         ],
+         "presentation": {
+            "echo": true,
+            "reveal": "always",
+            "focus": false,
+            "panel": "dedicated"
+         }
+      },
+      {
+         "taskName": "Compile test protobuf",
+         "command": "protoc",
+         "args": [
+            "--go_out=plugins=grpc:.",
+            "./test/service1.proto"
+         ],
+         "problemMatcher": [
+            "$go"
+         ]
+      },
+      {
+         "taskName": "Compile service protobuf",
+         "command": "protoc",
+         "args": [
+            "--go_out=.",
+            "./service/request.proto"
+         ],
+         "problemMatcher": [
+            "$go"
+         ]
+      }
+   ]
+}

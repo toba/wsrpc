@@ -1,0 +1,48 @@
+{
+    "editor.autoIndent": true,
+    "editor.dragAndDrop": true,
+    "editor.tabSize": 3,
+    "editor.parameterHints": true,
+
+    "files.eol": "\n",
+
+    "go.buildOnSave": "package",
+    "go.vetOnSave": "package",
+    "go.vetFlags": [
+       "composites=false"
+    ],
+    "go.enableCodeLens": {
+       "references": false,
+       "runtest": true
+    },
+    "go.buildTags": "",
+    // https://golang.org/src/cmd/go/build.go
+    "go.buildFlags": [],
+    // gogetdoc bogs down
+    // https://zmb3.github.io/post/gogetdoc/
+    "go.docsTool": "godoc",
+    "go.testFlags": [],
+    "go.lintTool": "megacheck",
+    //"go.lintTool": "gometalinter",
+    // See https://github.com/alecthomas/gometalinter
+    // "go.lintFlags": [
+    //    "disable-all",
+    //    "enable=errcheck",
+    //    "enable=goconst",
+    //    "enable=gotype",
+    //    "enable=staticcheck",
+    //    "enable=structcheck",
+    //    "enable=unconvert",
+    //    "enable=varcheck",
+    //    "enable=vet"
+    // ],
+    "go.lintOnSave": "package",
+    "go.coverageDecorator": "gutter",
+    "go.coverOnSave": false,
+    "go.useCodeSnippetsOnFunctionSuggest": false,
+    "go.formatTool": "goimports",
+    "go.formatFlags": [],
+    "go.formatOnSave": true,
+    // enabling this breaks the linters
+    "go.gocodeAutoBuild": false
+ }

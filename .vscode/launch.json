@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+       {
+          "name": "Server",
+          "type": "go",
+          "request": "launch",
+          "mode": "debug",
+          "program": "${workspaceRoot}/cmd/server/main.go",
+          "cwd": "${workspaceRoot}",
+          "env": {},
+          "args": ["-debug=true", "-silent=true"],
+          "showLog": false
+       }
+    ]
+ }
