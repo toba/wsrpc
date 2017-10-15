@@ -14,7 +14,7 @@ import (
 
 // Server is a websocket server for RPC requests.
 type Server struct {
-	mu         sync.Mutex
+	mu         sync.RWMutex
 	clients    map[*Client]bool
 	request    chan *Request
 	broadcast  chan []byte
