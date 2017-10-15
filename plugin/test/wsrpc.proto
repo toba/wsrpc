@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package wsrpc.testing;
+package plugin_test;
 
 message SimpleRequest {
 }

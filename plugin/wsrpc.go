@@ -10,35 +10,32 @@ import (
 	"github.com/golang/protobuf/protoc-gen-go/generator"
 )
 
-// Paths for packages used by code generated in this file,
-// relative to the import_prefix of the generator.Generator.
+// Paths for packages used by code generated in this file relative to the
+// import_prefix of the generator.Generator.
 const (
-	contextPkgPath = "golang.org/x/net/context"
+	contextPkgPath = "context"
 	wsRpcPkgPath   = "github.com/toba/wsrpc"
+)
+
+var (
+	contextPkg string
+	wsRpcPkg   string
 )
 
 func init() {
 	generator.RegisterPlugin(new(wsRPC))
 }
 
-// wsRPC is an implementation of the Go protocol buffer compiler's
-// plugin architecture. It generates bindings for wsRPC support.
+// wsRPC is implemented as a Go protocol buffer plugin to generate bindings
+// for WebSocket RPC.
 type wsRPC struct {
 	gen *generator.Generator
 }
 
-// Name returns the name of this plugin
+// Name of this plugin.
 func (ws *wsRPC) Name() string {
 	return "wsrpc"
 }
-
-// The names for packages imported in the generated code.
-// They may vary from the final path component of the import path
-// if the name is used by other packages.
-var (
-	contextPkg string
-	wsRpcPkg   string
-)
 
 // Init initializes the plugin.
 func (ws *wsRPC) Init(gen *generator.Generator) {
@@ -96,84 +93,42 @@ func unexport(s string) string { return strings.ToLower(s[:1]) + s[1:] }
 func (ws *wsRPC) generateService(file *generator.FileDescriptor, service *pb.ServiceDescriptorProto, index int) {
 	path := fmt.Sprintf("6,%d", index) // 6 means service.
 
-	origServName := service.GetName()
-	fullServName := origServName
+	originalName := service.GetName()
+	fullName := originalName
 	if pkg := file.GetPackage(); pkg != "" {
-		fullServName = pkg + "." + fullServName
+		fullName = pkg + "." + fullName
 	}
-	servName := generator.CamelCase(origServName)
+	name := generator.CamelCase(originalName)
+	descriptor := "_" + name + "_serviceDesc"
+	serverType := name + "Server"
 
+	ws.P("// Server API for ", name, " service")
 	ws.P()
-	ws.P("// Client API for ", servName, " service")
-	ws.P()
-
-	// Client interface.
-	ws.P("type ", servName, "Client interface {")
-	//for i, method := range service.Method {
-	//ws.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service.
-	//ws.P(ws.generateClientSignature(servName, method))
-	//}
-	ws.P("}")
-	ws.P()
-
-	// Client structure.
-	ws.P("type ", unexport(servName), "Client struct {")
-	ws.P("cc *", wsRpcPkg, ".Client")
-	ws.P("}")
-	ws.P()
-
-	// NewClient factory.
-	ws.P("func New", servName, "Client (cc *", wsRpcPkg, ".ClientConn) ", servName, "Client {")
-	ws.P("return &", unexport(servName), "Client{cc}")
-	ws.P("}")
-	ws.P()
-
-	//var methodIndex, streamIndex int
-	serviceDescVar := "_" + servName + "_serviceDesc"
-	// Client method implementations.
-	// for _, method := range service.Method {
-	// 	var descExpr string
-	// 	if !method.GetServerStreaming() && !method.GetClientStreaming() {
-	// 		// Unary RPC method
-	// 		descExpr = fmt.Sprintf("&%s.Methods[%d]", serviceDescVar, methodIndex)
-	// 		methodIndex++
-	// 	} else {
-	// 		// Streaming RPC method
-	// 		descExpr = fmt.Sprintf("&%s.Streams[%d]", serviceDescVar, streamIndex)
-	// 		streamIndex++
-	// 	}
-	// 	//ws.generateClientMethod(servName, fullServName, serviceDescVar, method, descExpr)
-	// }
-
-	ws.P("// Server API for ", servName, " service")
-	ws.P()
-
-	// Server interface.
-	serverType := servName + "Server"
 	ws.P("type ", serverType, " interface {")
+
 	for i, method := range service.Method {
 		ws.gen.PrintComments(fmt.Sprintf("%s,2,%d", path, i)) // 2 means method in a service
-		ws.P(ws.generateServerSignature(servName, method))
+		ws.P(ws.generateServerSignature(name, method))
 	}
 	ws.P("}")
 	ws.P()
 
 	// Server registration.
-	ws.P("func Register", servName, "Server(s *", wsRpcPkg, ".Server, srv ", serverType, ") {")
-	ws.P("s.RegisterService(&", serviceDescVar, `, srv)`)
+	ws.P("func Register", name, "Server(s *", wsRpcPkg, ".Server, srv ", serverType, ") {")
+	ws.P("s.RegisterService(&", descriptor, `, srv)`)
 	ws.P("}")
 	ws.P()
 
 	// Server handler implementations.
 	var handlerNames []string
 	for _, method := range service.Method {
-		hname := ws.generateServerMethod(servName, fullServName, method)
+		hname := ws.generateServerMethod(name, fullName, method)
 		handlerNames = append(handlerNames, hname)
 	}
 
 	// Service descriptor.
-	ws.P("var ", serviceDescVar, " = ", wsRpcPkg, ".ServiceDesc {")
-	ws.P("ServiceName: ", strconv.Quote(fullServName), ",")
+	ws.P("var ", descriptor, " = ", wsRpcPkg, ".ServiceDesc {")
+	ws.P("ServiceName: ", strconv.Quote(fullName), ",")
 	ws.P("HandlerType: (*", serverType, ")(nil),")
 	ws.P("Methods: []", wsRpcPkg, ".MethodDesc{")
 	for i, method := range service.Method {
