@@ -12,10 +12,10 @@ type MethodInfo struct {
 type methodHandler func(
 	srv interface{},
 	ctx context.Context,
-	dec func(interface{}) error) (interface{}, error)
+	decode func(interface{}) error) (interface{}, error)
 
-// MethodDesc represents an RPC service's method specification.
-type MethodDesc struct {
-	MethodName string
-	Handler    methodHandler
+// MethodMap maps a method name to its handler.
+type MethodMap struct {
+	Name    string
+	Handler methodHandler
 }

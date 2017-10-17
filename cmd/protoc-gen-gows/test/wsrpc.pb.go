@@ -10,8 +10,6 @@ It is generated from these files:
 It has these top-level messages:
 	SimpleRequest
 	SimpleResponse
-	StreamMsg
-	StreamMsg2
 */
 package plugin_test
 
@@ -22,6 +20,7 @@ import math "math"
 import (
 	context "context"
 	wsrpc "github.com/toba/wsrpc"
+	grpc "google.golang.org/grpc"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -51,186 +50,59 @@ func (m *SimpleResponse) String() string            { return proto.CompactTextSt
 func (*SimpleResponse) ProtoMessage()               {}
 func (*SimpleResponse) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
-type StreamMsg struct {
-}
-
-func (m *StreamMsg) Reset()                    { *m = StreamMsg{} }
-func (m *StreamMsg) String() string            { return proto.CompactTextString(m) }
-func (*StreamMsg) ProtoMessage()               {}
-func (*StreamMsg) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
-
-type StreamMsg2 struct {
-}
-
-func (m *StreamMsg2) Reset()                    { *m = StreamMsg2{} }
-func (m *StreamMsg2) String() string            { return proto.CompactTextString(m) }
-func (*StreamMsg2) ProtoMessage()               {}
-func (*StreamMsg2) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
-
 func init() {
 	proto.RegisterType((*SimpleRequest)(nil), "plugin_test.SimpleRequest")
 	proto.RegisterType((*SimpleResponse)(nil), "plugin_test.SimpleResponse")
-	proto.RegisterType((*StreamMsg)(nil), "plugin_test.StreamMsg")
-	proto.RegisterType((*StreamMsg2)(nil), "plugin_test.StreamMsg2")
 }
 
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ wsrpc.Client
+// Reference imports to suppress errors if not otherwise used.
+var (
+	_ context.Context
+	_ wsrpc.Client
+	_ grpc.ClientConn
+)
 
 // Server API for Test service
 
-type TestServer interface {
-	UnaryCall(context.Context, *SimpleRequest) (*SimpleResponse, error)
-	// This RPC streams from the server only.
-	Downstream(*SimpleRequest, Test_DownstreamServer) error
-	// This RPC streams from the client.
-	Upstream(Test_UpstreamServer) error
-	// This one streams in both directions.
-	Bidi(Test_BidiServer) error
+type TestService interface {
+	Execute(context.Context) (*SimpleResponse, error)
 }
 
-func RegisterTestServer(s *wsrpc.Server, srv TestServer) {
-	s.RegisterService(&_Test_serviceDesc, srv)
+func RegisterTestService(s *wsrpc.Server, srv TestService) {
+	s.RegisterService(&TestServiceDescriptor, srv)
 }
 
-func _Test_UnaryCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor wsrpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SimpleRequest)
-	if err := dec(in); err != nil {
+func TestExecuteHandler(srv interface{}, ctx context.Context, decode func(interface{}) error) (interface{}, error) {
+	in := &SimpleRequest{}
+	if err := decode(in); err != nil {
 		return nil, err
 	}
-	if interceptor == nil {
-		return srv.(TestServer).UnaryCall(ctx, in)
-	}
-	info := &wsrpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/plugin_test.Test/UnaryCall",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TestServer).UnaryCall(ctx, req.(*SimpleRequest))
-	}
-	return interceptor(ctx, in, info, handler)
+	return srv.(TestService).Execute(ctx, in)
 }
 
-func _Test_Downstream_Handler(srv interface{}, stream wsrpc.ServerStream) error {
-	m := new(SimpleRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
-	}
-	return srv.(TestServer).Downstream(m, &testDownstreamServer{stream})
-}
-
-type Test_DownstreamServer interface {
-	Send(*StreamMsg) error
-	wsrpc.ServerStream
-}
-
-type testDownstreamServer struct {
-	wsrpc.ServerStream
-}
-
-func (x *testDownstreamServer) Send(m *StreamMsg) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func _Test_Upstream_Handler(srv interface{}, stream wsrpc.ServerStream) error {
-	return srv.(TestServer).Upstream(&testUpstreamServer{stream})
-}
-
-type Test_UpstreamServer interface {
-	SendAndClose(*SimpleResponse) error
-	Recv() (*StreamMsg, error)
-	wsrpc.ServerStream
-}
-
-type testUpstreamServer struct {
-	wsrpc.ServerStream
-}
-
-func (x *testUpstreamServer) SendAndClose(m *SimpleResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *testUpstreamServer) Recv() (*StreamMsg, error) {
-	m := new(StreamMsg)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _Test_Bidi_Handler(srv interface{}, stream wsrpc.ServerStream) error {
-	return srv.(TestServer).Bidi(&testBidiServer{stream})
-}
-
-type Test_BidiServer interface {
-	Send(*StreamMsg2) error
-	Recv() (*StreamMsg, error)
-	wsrpc.ServerStream
-}
-
-type testBidiServer struct {
-	wsrpc.ServerStream
-}
-
-func (x *testBidiServer) Send(m *StreamMsg2) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *testBidiServer) Recv() (*StreamMsg, error) {
-	m := new(StreamMsg)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-var _Test_serviceDesc = wsrpc.ServiceDesc{
-	ServiceName: "plugin_test.Test",
-	HandlerType: (*TestServer)(nil),
-	Methods: []wsrpc.MethodDesc{
+var TestServiceDescriptor = wsrpc.ServiceDescriptor{
+	Name:        "plugin_test.Test",
+	HandlerType: (*TestService)(nil),
+	Methods: []wsrpc.MethodMap{
 		{
-			MethodName: "UnaryCall",
-			Handler:    _Test_UnaryCall_Handler,
+			Name:    "Execute",
+			Handler: TestExecuteHandler,
 		},
 	},
-	Streams: []wsrpc.StreamDesc{
-		{
-			StreamName:    "Downstream",
-			Handler:       _Test_Downstream_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "Upstream",
-			Handler:       _Test_Upstream_Handler,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "Bidi",
-			Handler:       _Test_Bidi_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-	},
-	Metadata: "cmd/protoc-gen-gows/test/wsrpc.proto",
+	About: "cmd/protoc-gen-gows/test/wsrpc.proto",
 }
 
 func init() { proto.RegisterFile("cmd/protoc-gen-gows/test/wsrpc.proto", fileDescriptor0) }
 
 var fileDescriptor0 = []byte{
-	// 213 bytes of a gzipped FileDescriptorProto
+	// 136 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x49, 0xce, 0x4d, 0xd1,
 	0x2f, 0x28, 0xca, 0x2f, 0xc9, 0x4f, 0xd6, 0x4d, 0x4f, 0xcd, 0xd3, 0x4d, 0xcf, 0x2f, 0x2f, 0xd6,
 	0x2f, 0x49, 0x2d, 0x2e, 0xd1, 0x2f, 0x2f, 0x2e, 0x2a, 0x48, 0xd6, 0x03, 0x4b, 0x09, 0x71, 0x17,
 	0xe4, 0x94, 0xa6, 0x67, 0xe6, 0xc5, 0x83, 0x24, 0x94, 0xf8, 0xb9, 0x78, 0x83, 0x33, 0x73, 0x0b,
 	0x72, 0x52, 0x83, 0x52, 0x0b, 0x4b, 0x41, 0x02, 0x02, 0x5c, 0x7c, 0x30, 0x81, 0xe2, 0x82, 0xfc,
-	0xbc, 0xe2, 0x54, 0x25, 0x6e, 0x2e, 0xce, 0xe0, 0x92, 0xa2, 0xd4, 0xc4, 0x5c, 0xdf, 0xe2, 0x74,
-	0x25, 0x1e, 0x2e, 0x2e, 0x38, 0xc7, 0xc8, 0x68, 0x02, 0x13, 0x17, 0x4b, 0x48, 0x6a, 0x71, 0x89,
-	0x90, 0x0b, 0x17, 0x67, 0x68, 0x5e, 0x62, 0x51, 0xa5, 0x73, 0x62, 0x4e, 0x8e, 0x90, 0x94, 0x1e,
-	0x92, 0x0d, 0x7a, 0x28, 0xc6, 0x4b, 0x49, 0x63, 0x95, 0x83, 0xd8, 0x24, 0xe4, 0xc4, 0xc5, 0xe5,
-	0x92, 0x5f, 0x9e, 0x57, 0x0c, 0xb6, 0x00, 0xaf, 0x31, 0x62, 0xa8, 0x72, 0x30, 0x17, 0x19, 0x30,
-	0x0a, 0x39, 0x72, 0x71, 0x84, 0x16, 0x40, 0x4d, 0xc0, 0xa1, 0x0a, 0xaf, 0x23, 0x34, 0x18, 0x85,
-	0xac, 0xb9, 0x58, 0x9c, 0x32, 0x53, 0x32, 0x71, 0x6a, 0x17, 0xc7, 0x2e, 0x6e, 0xa4, 0xc1, 0x68,
-	0xc0, 0x98, 0xc4, 0x06, 0x0e, 0x64, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xee, 0xd8, 0x18,
-	0x04, 0x8c, 0x01, 0x00, 0x00,
+	0xbc, 0xe2, 0x54, 0x23, 0x2f, 0x2e, 0x96, 0x90, 0xd4, 0xe2, 0x12, 0x21, 0x27, 0x2e, 0x76, 0xd7,
+	0x8a, 0xd4, 0xe4, 0xd2, 0x92, 0x54, 0x21, 0x29, 0x3d, 0x24, 0x33, 0xf4, 0x50, 0x0c, 0x90, 0x92,
+	0xc6, 0x2a, 0x07, 0x31, 0x2b, 0x89, 0x0d, 0xec, 0x04, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff,
+	0xf9, 0x69, 0xe7, 0xcb, 0xaa, 0x00, 0x00, 0x00,
 }
