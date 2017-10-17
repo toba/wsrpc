@@ -19,6 +19,11 @@ import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
 
+import (
+	context "context"
+	wsrpc "github.com/toba/wsrpc"
+)
+
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
 var _ = fmt.Errorf
@@ -67,6 +72,147 @@ func init() {
 	proto.RegisterType((*SimpleResponse)(nil), "plugin_test.SimpleResponse")
 	proto.RegisterType((*StreamMsg)(nil), "plugin_test.StreamMsg")
 	proto.RegisterType((*StreamMsg2)(nil), "plugin_test.StreamMsg2")
+}
+
+// Reference imports to suppress errors if they are not otherwise used.
+var _ context.Context
+var _ wsrpc.Client
+
+// Server API for Test service
+
+type TestServer interface {
+	UnaryCall(context.Context, *SimpleRequest) (*SimpleResponse, error)
+	// This RPC streams from the server only.
+	Downstream(*SimpleRequest, Test_DownstreamServer) error
+	// This RPC streams from the client.
+	Upstream(Test_UpstreamServer) error
+	// This one streams in both directions.
+	Bidi(Test_BidiServer) error
+}
+
+func RegisterTestServer(s *wsrpc.Server, srv TestServer) {
+	s.RegisterService(&_Test_serviceDesc, srv)
+}
+
+func _Test_UnaryCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor wsrpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SimpleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TestServer).UnaryCall(ctx, in)
+	}
+	info := &wsrpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/plugin_test.Test/UnaryCall",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TestServer).UnaryCall(ctx, req.(*SimpleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Test_Downstream_Handler(srv interface{}, stream wsrpc.ServerStream) error {
+	m := new(SimpleRequest)
+	if err := stream.RecvMsg(m); err != nil {
+		return err
+	}
+	return srv.(TestServer).Downstream(m, &testDownstreamServer{stream})
+}
+
+type Test_DownstreamServer interface {
+	Send(*StreamMsg) error
+	wsrpc.ServerStream
+}
+
+type testDownstreamServer struct {
+	wsrpc.ServerStream
+}
+
+func (x *testDownstreamServer) Send(m *StreamMsg) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func _Test_Upstream_Handler(srv interface{}, stream wsrpc.ServerStream) error {
+	return srv.(TestServer).Upstream(&testUpstreamServer{stream})
+}
+
+type Test_UpstreamServer interface {
+	SendAndClose(*SimpleResponse) error
+	Recv() (*StreamMsg, error)
+	wsrpc.ServerStream
+}
+
+type testUpstreamServer struct {
+	wsrpc.ServerStream
+}
+
+func (x *testUpstreamServer) SendAndClose(m *SimpleResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *testUpstreamServer) Recv() (*StreamMsg, error) {
+	m := new(StreamMsg)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Test_Bidi_Handler(srv interface{}, stream wsrpc.ServerStream) error {
+	return srv.(TestServer).Bidi(&testBidiServer{stream})
+}
+
+type Test_BidiServer interface {
+	Send(*StreamMsg2) error
+	Recv() (*StreamMsg, error)
+	wsrpc.ServerStream
+}
+
+type testBidiServer struct {
+	wsrpc.ServerStream
+}
+
+func (x *testBidiServer) Send(m *StreamMsg2) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *testBidiServer) Recv() (*StreamMsg, error) {
+	m := new(StreamMsg)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+var _Test_serviceDesc = wsrpc.ServiceDesc{
+	ServiceName: "plugin_test.Test",
+	HandlerType: (*TestServer)(nil),
+	Methods: []wsrpc.MethodDesc{
+		{
+			MethodName: "UnaryCall",
+			Handler:    _Test_UnaryCall_Handler,
+		},
+	},
+	Streams: []wsrpc.StreamDesc{
+		{
+			StreamName:    "Downstream",
+			Handler:       _Test_Downstream_Handler,
+			ServerStreams: true,
+		},
+		{
+			StreamName:    "Upstream",
+			Handler:       _Test_Upstream_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "Bidi",
+			Handler:       _Test_Bidi_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "cmd/protoc-gen-gows/test/wsrpc.proto",
 }
 
 func init() { proto.RegisterFile("cmd/protoc-gen-gows/test/wsrpc.proto", fileDescriptor0) }

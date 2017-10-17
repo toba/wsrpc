@@ -14,11 +14,15 @@
       },
       {
          "taskName": "Compile protoc plugin",
+         "options": {
+            "cwd": "${workspaceFolder}/cmd/protoc-gen-gows"
+         },
+         "args": ["main.go", "wsrpc.go"],
          "windows": {
-            "command": "go build -o ${env:GOPATH}\\bin\\protoc-gen-gows.exe .\\cmd\\protoc-gen-gows\\main.go"
+            "command": "go build -o ${env:GOPATH}\\bin\\protoc-gen-gows.exe"
          },
          "osx": {
-            "command": "go build -o ${env:GOPATH}/bin/protoc-gen-gows ./cmd/protoc-gen-gows/main.go"
+            "command": "go build -o ${env:GOPATH}/bin/protoc-gen-gows"
          },
          "type": "shell",
          "problemMatcher": [
