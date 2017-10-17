@@ -5,9 +5,22 @@
          "taskName": "Compile test protobuf",
          "command": "protoc",
          "args": [
-            "--go_out=plugins=wsrpc:.",
-            "./plugin/test/wsrpc.proto"
+            "--gows_out=plugins=wsrpc:.",
+            "./cmd/protoc-gen-gows/test/wsrpc.proto"
          ],
+         "problemMatcher": [
+            "$go"
+         ]
+      },
+      {
+         "taskName": "Compile protoc plugin",
+         "windows": {
+            "command": "go build -o ${env:GOPATH}\\bin\\protoc-gen-gows.exe .\\cmd\\protoc-gen-gows\\main.go"
+         },
+         "osx": {
+            "command": "go build -o ${env:GOPATH}/bin/protoc-gen-gows ./cmd/protoc-gen-gows/main.go"
+         },
+         "type": "shell",
          "problemMatcher": [
             "$go"
          ]

@@ -1,5 +1,9 @@
 # Overview
-Go WebSocket RPC server with `protoc` plugin to generate service bindings.
-```
-protoc --go_out=plugins=grpc:. ./test/wsrpc.proto
-```
+The goal of *wsrpc* is to seamlessly use protobuf files to generate Go code
+that can be used across WebSockets instead of gRPC.
+
+# Contributing
+
+
+## Dependencies
+
