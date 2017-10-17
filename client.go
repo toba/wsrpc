@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/toba/coreweb/header"
-
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -41,7 +39,7 @@ var upgrader = websocket.Upgrader{
 	// CheckOrigin ensures client is allowed to connect.
 	// http://www.gorillatoolkit.org/pkg/websocket
 	CheckOrigin: func(r *http.Request) bool {
-		return strings.HasPrefix(r.RemoteAddr, "127.0.0.1") || r.Header[header.Origin][0] == r.Host
+		return strings.HasPrefix(r.RemoteAddr, "127.0.0.1") || r.Header["Origin"][0] == r.Host
 	},
 }
 
@@ -71,8 +69,9 @@ func (c *Client) readPump() {
 			break
 		}
 		c.server.request <- &Request{
-			Client:  c,
-			Message: message,
+			Client:     c,
+			RawMessage: message,
+			WireLength: len(message),
 		}
 	}
 }

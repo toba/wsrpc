@@ -107,7 +107,7 @@ func (ws *wsRPC) generateService(file *generator.FileDescriptor, service *pb.Ser
 	descriptor := name + "ServiceDescriptor"
 	serviceType := name + "Service"
 
-	ws.P("// Server API for ", name, " service")
+	ws.P("// WebSocket Server API for ", name, " service")
 	ws.P()
 	ws.P("type ", serviceType, " interface {")
 

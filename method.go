@@ -4,17 +4,17 @@ import "context"
 
 // MethodInfo describes an RPC endpoint.
 type MethodInfo struct {
-	Name           string // Name without service or package name.
+	Name           string
 	IsClientStream bool
 	IsServerStream bool
 }
 
 type methodHandler func(
-	srv interface{},
+	service interface{},
 	ctx context.Context,
-	decode func(interface{}) error) (interface{}, error)
+	decoder func(interface{}) error) (interface{}, error)
 
-// MethodMap maps a method name to its handler.
+// MethodMap maps a fully qualified method name to its handler.
 type MethodMap struct {
 	Name    string
 	Handler methodHandler
